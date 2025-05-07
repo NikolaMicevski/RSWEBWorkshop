@@ -1,0 +1,87 @@
+﻿@model WorkshopV2.Models.Teacher
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Teacher</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.FirstName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.FirstName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.LastName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.LastName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Degree)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Degree)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.AcademicRank)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.AcademicRank)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.OfficeNumber)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.OfficeNumber)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.HireDate)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.HireDate)
+        </dd>
+    </dl>
+</div>
+
+<h4>Subjects (Courses)</h4>
+<hr />
+<h5>As First Teacher:</h5>
+@if (Model.CoursesAsFirstTeacher != null && Model.CoursesAsFirstTeacher.Any())
+{
+    <ul>
+        @foreach (var course in Model.CoursesAsFirstTeacher)
+        {
+            <li>@course.Title</li>
+        }
+    </ul>
+}
+else
+{
+    <p>No courses as First Teacher</p>
+}
+
+<h5>As Second Teacher:</h5>
+@if (Model.CoursesAsSecondTeacher != null && Model.CoursesAsSecondTeacher.Any())
+{
+    <ul>
+        @foreach (var course in Model.CoursesAsSecondTeacher)
+        {
+            <li>@course.Title</li>
+        }
+    </ul>
+}
+else
+{
+    <p>No courses as Second Teacher</p>
+}
+
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>
