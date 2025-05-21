@@ -15,14 +15,9 @@ namespace WorkshopV2.Data
             using var context = new WorkshopV2Context(
                 serviceProvider.GetRequiredService<DbContextOptions<WorkshopV2Context>>());
 
-            // Seed your domain data as before here...
-            // [Your existing Teacher, Student, Course, Enrollment seeding code]
-
-            // Now seed Identity data
             var userManager = serviceProvider.GetRequiredService<UserManager<WorkshopV2User>>();
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-            // Create roles if they don't exist
             string[] roles = new[] { "Admin", "Teacher", "Student" };
             foreach (var role in roles)
             {
@@ -30,7 +25,6 @@ namespace WorkshopV2.Data
                     await roleManager.CreateAsync(new IdentityRole(role));
             }
 
-            // Create admin user if not exists
             var adminEmail = "admin@example.com";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)
