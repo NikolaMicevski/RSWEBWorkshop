@@ -1,0 +1,83 @@
+﻿@model List<WorkshopV2.Models.ViewModels.StudentEnrollmentViewModel>
+
+@{
+    ViewData["Title"] = "Manage Enrollments";
+    int courseId = (int)ViewBag.CourseId;
+}
+
+<h2>Manage Enrollments</h2>
+
+<input type="text" id="searchBox" placeholder="Search students..." class="form-control mb-3" />
+
+<table class="table table-bordered" id="studentsTable">
+    <thead>
+        <tr>
+            <th>Student</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var student in Model)
+        {
+            <tr class="student-row" data-student-id="@student.StudentId">
+                <td>@student.FullName</td>
+                <td>
+                    @if (!student.IsEnrolled)
+                    {
+                        <button class="btn btn-success enroll-btn" data-action="enroll">Enroll</button>
+                    }
+                    else if (student.IsFinished)
+                    {
+                        <button class="btn btn-secondary" disabled>Finished</button>
+                        <button class="btn btn-danger enroll-btn" data-action="remove-finished">Remove</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-warning enroll-btn" data-action="finish">Finish</button>
+                        <button class="btn btn-danger enroll-btn" data-action="disenroll">Disenroll</button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('.enroll-btn').click(function () {
+                var $btn = $(this);
+                var action = $btn.data('action');
+                var studentId = $btn.closest('tr').data('student-id');
+
+                if (action === 'remove-finished') {
+                    if (!confirm("Are you sure you want to remove this finished student? This will delete their enrollment.")) {
+                        return;
+                    }
+                }
+
+                $.ajax({
+                    url: '@Url.Action("UpdateEnrollment", "Courses")',
+                    type: 'POST',
+                    data: {
+                        studentId: studentId,
+                        courseId: @courseId,
+                        action: action
+                    },
+                    success: function () {
+                        location.reload();
+                    }
+                });
+            });
+
+            $('#searchBox').on('input', function () {
+                var searchTerm = $(this).val().toLowerCase();
+
+                $('#studentsTable tbody .student-row').each(function () {
+                    var studentName = $(this).find('td:first').text().toLowerCase();
+                    $(this).toggle(studentName.includes(searchTerm));
+                });
+            });
+        });
+    </script>
+}

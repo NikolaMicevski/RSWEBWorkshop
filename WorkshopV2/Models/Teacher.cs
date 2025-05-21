@@ -17,6 +17,7 @@ namespace WorkshopV2.Models
         public string? OfficeNumber { get; set; }
         [DataType(DataType.Date)]
         public DateTime HireDate { get; set; }
+        public string? ImageUrl { get; set; }
         public List<Course>? CoursesAsFirstTeacher { get; set; }
         public List<Course>? CoursesAsSecondTeacher { get; set; }
 

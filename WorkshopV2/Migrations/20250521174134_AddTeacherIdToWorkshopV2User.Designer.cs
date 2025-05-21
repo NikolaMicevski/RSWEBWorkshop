@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WorkshopV2.Data;
 
@@ -11,9 +12,11 @@ using WorkshopV2.Data;
 namespace WorkshopV2.Migrations
 {
     [DbContext(typeof(WorkshopV2Context))]
-    partial class WorkshopV2ContextModelSnapshot : ModelSnapshot
+    [Migration("20250521174134_AddTeacherIdToWorkshopV2User")]
+    partial class AddTeacherIdToWorkshopV2User
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -279,9 +282,6 @@ namespace WorkshopV2.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -320,9 +320,6 @@ namespace WorkshopV2.Migrations
 
                     b.Property<DateTime>("HireDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -383,9 +380,6 @@ namespace WorkshopV2.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<long?>("StudentId")
-                        .HasColumnType("bigint");
-
                     b.Property<int?>("TeacherId")
                         .HasColumnType("int");
 
@@ -405,8 +399,6 @@ namespace WorkshopV2.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.HasIndex("StudentId");
 
                     b.HasIndex("TeacherId");
 
@@ -502,15 +494,9 @@ namespace WorkshopV2.Migrations
 
             modelBuilder.Entity("WorkshopV2.Models.WorkshopV2User", b =>
                 {
-                    b.HasOne("WorkshopV2.Models.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId");
-
                     b.HasOne("WorkshopV2.Models.Teacher", "Teacher")
                         .WithMany()
                         .HasForeignKey("TeacherId");
-
-                    b.Navigation("Student");
 
                     b.Navigation("Teacher");
                 });

@@ -1,22 +1,29 @@
 ﻿@model IEnumerable<WorkshopV2.Models.Course>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Courses";
 }
 
-<h1>Index</h1>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<h1>Courses</h1>
 
 <p>
-    <a asp-action="Create">Create New</a>
+    @if (User.IsInRole("Admin"))
+    {
+        <a class="btn btn-success" asp-action="Create">+ Create New Course</a>
+    }
 </p>
-<div>
-    <button type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+
+<div class="dropdown mb-3">
+    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
         Filters
     </button>
     <ul class="dropdown-menu p-3" aria-labelledby="filterDropdown">
         <form asp-action="Index" method="get">
             <div class="mb-3">
-                <select name="Title" class="form-control">
+                <label for="Title" class="form-label">Title</label>
+                <select name="Title" id="Title" class="form-control select2">
                     <option value="">All Titles</option>
                     @foreach (var title in ViewBag.Titles)
                     {
@@ -26,7 +33,8 @@
             </div>
 
             <div class="mb-3">
-                <select name="Semester" class="form-control">
+                <label for="Semester" class="form-label">Semester</label>
+                <select name="Semester" id="Semester" class="form-control select2">
                     <option value="">All Semesters</option>
                     @foreach (var semester in ViewBag.Semesters)
                     {
@@ -36,7 +44,8 @@
             </div>
 
             <div class="mb-3">
-                <select name="Programme" class="form-control">
+                <label for="Programme" class="form-label">Programme</label>
+                <select name="Programme" id="Programme" class="form-control select2">
                     <option value="">All Programmes</option>
                     @foreach (var programme in ViewBag.Programmes)
                     {
@@ -46,70 +55,66 @@
             </div>
 
             <div class="text-center">
-                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
             </div>
         </form>
     </ul>
 </div>
 
+<div class="table-responsive">
+    <table class="table table-striped table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>@Html.DisplayNameFor(model => model.Title)</th>
+                <th>@Html.DisplayNameFor(model => model.Credits)</th>
+                <th>@Html.DisplayNameFor(model => model.Semester)</th>
+                <th>@Html.DisplayNameFor(model => model.Programme)</th>
+                <th>@Html.DisplayNameFor(model => model.EducationLevel)</th>
+                <th>@Html.DisplayNameFor(model => model.FirstTeacherId)</th>
+                <th>@Html.DisplayNameFor(model => model.SecondTeacherId)</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@Html.DisplayFor(modelItem => item.Title)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Credits)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Semester)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Programme)</td>
+                    <td>@Html.DisplayFor(modelItem => item.EducationLevel)</td>
+                    <td>@Html.DisplayFor(modelItem => item.FirstTeacherId)</td>
+                    <td>@Html.DisplayFor(modelItem => item.SecondTeacherId)</td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a class="btn btn-sm btn-warning" asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                                <a class="btn btn-sm btn-danger" asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                                <a class="btn btn-sm btn-secondary" asp-action="ManageStudents" asp-route-id="@item.Id">Enroll</a>
+                            }
+                            <a class="btn btn-sm btn-info" asp-action="Details" asp-route-id="@item.Id">Details</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Credits)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Semester)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Programme)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EducationLevel)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FirstTeacherId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SecondTeacherId)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Credits)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Semester)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Programme)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.EducationLevel)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FirstTeacherId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SecondTeacherId)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $('.dropdown-menu').on('click', function (e) {
+            e.stopPropagation();
+        });
+
+        $(document).ready(function () {
+            $('.select2').select2({
+                width: '100%',
+                dropdownParent: $('.dropdown-menu')
+            });
+        });
+    </script>
 }
-    </tbody>
-</table>

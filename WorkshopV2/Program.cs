@@ -1,25 +1,43 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using WorkshopV2.Data;
-var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<WorkshopV2Context>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("WorkshopV2Context") ?? throw new InvalidOperationException("Connection string 'WorkshopV2Context' not found.")));
+using WorkshopV2.Models;
+using Microsoft.AspNetCore.Identity;
 
-// Add services to the container.
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<WorkshopV2Context>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("WorkshopV2Context")
+        ?? throw new InvalidOperationException("Connection string 'WorkshopV2Context' not found.")));
+
+builder.Services.AddIdentity<WorkshopV2User, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+
+    options.SignIn.RequireConfirmedAccount = false;
+})
+.AddEntityFrameworkStores<WorkshopV2Context>()
+.AddDefaultTokenProviders();
+
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddRazorPages();
+
 var app = builder.Build();
+
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    SeedData.Initialize(services);
+    await SeedData.InitializeAsync(services);
 }
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -28,10 +46,13 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapRazorPages();
 
 app.Run();

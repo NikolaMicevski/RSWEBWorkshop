@@ -39,12 +39,16 @@
             </div>
             <div class="form-group">
                 <label asp-for="FirstTeacherId" class="control-label"></label>
-                <input asp-for="FirstTeacherId" class="form-control" />
+                <select asp-for="FirstTeacherId" class="form-control" asp-items="ViewBag.Teachers">
+                    <option value="">-- Select First Teacher --</option>
+                </select>
                 <span asp-validation-for="FirstTeacherId" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="SecondTeacherId" class="control-label"></label>
-                <input asp-for="SecondTeacherId" class="form-control" />
+                <select asp-for="SecondTeacherId" class="form-control" asp-items="ViewBag.Teachers">
+                    <option value="">-- Select Second Teacher (optional) --</option>
+                </select>
                 <span asp-validation-for="SecondTeacherId" class="text-danger"></span>
             </div>
             <div class="form-group">

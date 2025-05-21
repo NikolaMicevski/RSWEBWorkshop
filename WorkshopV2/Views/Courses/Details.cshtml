@@ -1,77 +1,202 @@
 ﻿@model WorkshopV2.Models.Course
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Course Details";
+    var currentStudentId = ViewBag.CurrentStudentId as long?;
 }
 
-<h1>Details</h1>
+<h1>Course Details</h1>
 
 <div>
     <h4>Course</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Credits)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Credits)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Semester)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Semester)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Programme)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Programme)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.EducationLevel)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.EducationLevel)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.FirstTeacherId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.FirstTeacherId)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.SecondTeacherId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.SecondTeacherId)
-        </dd>
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Title)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Title)</dd>
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Credits)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Credits)</dd>
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Semester)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Semester)</dd>
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Programme)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Programme)</dd>
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.EducationLevel)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.EducationLevel)</dd>
     </dl>
 </div>
+
 <h4>Enrolled Students</h4>
 <hr />
 
-<h5>Students:</h5>
+@if (User.IsInRole("Teacher") || User.IsInRole("Admin"))
+{
+    <form method="get" asp-action="Details" asp-route-id="@Model.Id">
+        <label for="year">Select Year:</label>
+        <select id="year" name="year" class="form-control" onchange="this.form.submit()">
+            <option value="">All Years</option>
+            @foreach (var y in ViewBag.AvailableYears)
+            {
+                <option value="@y" selected="@(ViewBag.Year == y ? "selected" : "")">@y</option>
+            }
+        </select>
+    </form>
+}
+
 @if (Model.Enrollment != null && Model.Enrollment.Any())
 {
-    <ul>
-        @foreach (var enrollment in Model.Enrollment)
+    <form method="post" asp-action="UpdateGrades">
+        <input type="hidden" name="CourseId" value="@Model.Id" />
+        <input type="hidden" name="Year" value="@ViewBag.Year" />
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Exam</th>
+                    <th>Seminal</th>
+                    <th>Project</th>
+                    <th>Additional</th>
+                    <th>Total</th>
+                    <th>Grade</th>
+                    <th>Status</th>
+                    <th>Seminal File</th>
+                    <th>Project URL</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model.Enrollment)
+                {
+                    var isTeacherOrAdmin = User.IsInRole("Teacher") || User.IsInRole("Admin");
+                    bool isCurrentStudent = currentStudentId.HasValue && e.Student?.Id == currentStudentId.Value;
+
+                    if (!isTeacherOrAdmin && !isCurrentStudent)
+                    {
+                        continue;
+                    }
+
+                    var total = e.ExamPoints + e.SeminalPoints + e.ProjectPoints + e.AdditionalPoints;
+
+                    int grade = total < 50 ? 5 :
+                    total <= 60 ? 6 :
+                    total <= 70 ? 7 :
+                    total <= 80 ? 8 :
+                    total <= 90 ? 9 : 10;
+
+                    var isFinished = e.FinishDate.HasValue && e.FinishDate <= DateTime.Now;
+                    var canEdit = !isFinished && User.IsInRole("Teacher");
+
+                    <tr>
+                        <td>
+                            @e.Student.FirstName @e.Student.LastName
+                            @if (canEdit)
+                            {
+                                <input type="hidden" name="Enrollments[@Model.Enrollment.IndexOf(e)].Id" value="@e.Id" />
+                            }
+                        </td>
+                        <td>
+                            @if (canEdit)
+                            {
+                                <input type="number" name="Enrollments[@Model.Enrollment.IndexOf(e)].ExamPoints" value="@e.ExamPoints" class="form-control" min="0" />
+                            }
+                            else
+                            {
+                                @e.ExamPoints
+                            }
+                        </td>
+                        <td>
+                            @if (canEdit)
+                            {
+                                <input type="number" name="Enrollments[@Model.Enrollment.IndexOf(e)].SeminalPoints" value="@e.SeminalPoints" class="form-control" min="0" />
+                            }
+                            else
+                            {
+                                @e.SeminalPoints
+                            }
+                        </td>
+                        <td>
+                            @if (canEdit)
+                            {
+                                <input type="number" name="Enrollments[@Model.Enrollment.IndexOf(e)].ProjectPoints" value="@e.ProjectPoints" class="form-control" min="0" />
+                            }
+                            else
+                            {
+                                @e.ProjectPoints
+                            }
+                        </td>
+                        <td>
+                            @if (canEdit)
+                            {
+                                <input type="number" name="Enrollments[@Model.Enrollment.IndexOf(e)].AdditionalPoints" value="@e.AdditionalPoints" class="form-control" min="0" />
+                            }
+                            else
+                            {
+                                @e.AdditionalPoints
+                            }
+                        </td>
+                        <td>@total</td>
+                        <td>@grade</td>
+                        <td>@(isFinished ? "Finished" : "Active")</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(e.SeminalUrl))
+                            {
+                                <a href="@e.SeminalUrl" download>@System.IO.Path.GetFileName(e.SeminalUrl)</a>
+                            }
+                            else
+                            {
+                                <span>No file uploaded</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(e.ProjectUrl))
+                            {
+                                <a href="@e.ProjectUrl" target="_blank">@e.ProjectUrl</a>
+                            }
+                            else
+                            {
+                                <span>No URL provided</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (User.IsInRole("Teacher"))
         {
-            <li>@enrollment.Student.FirstName @enrollment.Student.LastName</li>
+            <button type="submit" class="btn btn-primary">Save Grades</button>
         }
-    </ul>
+    </form>
+
+    @if (User.IsInRole("Student"))
+    {
+        var myEnrollment = Model.Enrollment.FirstOrDefault(e => currentStudentId.HasValue && e.Student?.Id == currentStudentId.Value);
+        if (myEnrollment != null)
+        {
+            <div class="mt-4">
+                <h4>Attach File</h4>
+                <form asp-action="UploadStudentFile" asp-controller="Courses" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="enrollmentId" value="@myEnrollment.Id" />
+
+                    <div class="form-group">
+                        <label for="file">Choose file:</label>
+                        <input type="file" name="file" class="form-control" required />
+                    </div>
+
+                    <div class="form-group mt-2">
+                        <label for="projectUrl">Project URL (optional):</label>
+                        <input type="url" name="projectUrl" class="form-control" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary mt-2">Upload</button>
+                </form>
+            </div>
+        }
+    }
 }
 else
 {
-    <p>No students enrolled in this course</p>
+    <p>No students enrolled.</p>
 }
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
+
+<div class="mt-4">
+    <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>

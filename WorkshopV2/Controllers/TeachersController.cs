@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -13,10 +15,17 @@ namespace WorkshopV2.Controllers
     public class TeachersController : Controller
     {
         private readonly WorkshopV2Context _context;
+        private readonly UserManager<WorkshopV2User> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public TeachersController(WorkshopV2Context context)
+        public TeachersController(
+            WorkshopV2Context context,
+            UserManager<WorkshopV2User> userManager,
+            RoleManager<IdentityRole> roleManager)
         {
             _context = context;
+            _userManager = userManager;
+            _roleManager = roleManager;
         }
 
         // GET: Teachers
@@ -95,6 +104,7 @@ namespace WorkshopV2.Controllers
 
 
         // GET: Teachers/Create
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
@@ -105,18 +115,58 @@ namespace WorkshopV2.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,Degree,AcademicRank,OfficeNumber,HireDate")] Teacher teacher)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,Degree,AcademicRank,OfficeNumber,HireDate")] Teacher teacher,string email,IFormFile? image)
         {
             if (ModelState.IsValid)
             {
+                if (image != null && image.Length > 0)
+                {
+                    var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "teachers");
+                    if (!Directory.Exists(imagePath))
+                        Directory.CreateDirectory(imagePath);
+
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
+                    var filePath = Path.Combine(imagePath, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await image.CopyToAsync(stream);
+                    }
+
+                    teacher.ImageUrl = "/images/teachers/" + fileName;
+                }
+
                 _context.Add(teacher);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+
+                var user = new WorkshopV2User
+                {
+                    UserName = email,
+                    Email = email,
+                    TeacherId = teacher.Id
+                };
+
+                string defaultPassword = "Teacher123!";
+                var result = await _userManager.CreateAsync(user, defaultPassword);
+
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(user, "Teacher");
+                    return RedirectToAction(nameof(Index));
+                }
+
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError("", error.Description);
+                }
             }
+
             return View(teacher);
         }
 
         // GET: Teachers/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -137,7 +187,8 @@ namespace WorkshopV2.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FirstName,LastName,Degree,AcademicRank,OfficeNumber,HireDate")] Teacher teacher)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int id,[Bind("Id,FirstName,LastName,Degree,AcademicRank,OfficeNumber,HireDate")] Teacher teacher,IFormFile? image)  
         {
             if (id != teacher.Id)
             {
@@ -146,28 +197,61 @@ namespace WorkshopV2.Controllers
 
             if (ModelState.IsValid)
             {
+                var existingTeacher = await _context.Teacher.FindAsync(id);
+                if (existingTeacher == null)
+                    return NotFound();
+
+                existingTeacher.FirstName = teacher.FirstName;
+                existingTeacher.LastName = teacher.LastName;
+                existingTeacher.Degree = teacher.Degree;
+                existingTeacher.AcademicRank = teacher.AcademicRank;
+                existingTeacher.OfficeNumber = teacher.OfficeNumber;
+                existingTeacher.HireDate = teacher.HireDate;
+
+                if (image != null && image.Length > 0)
+                {
+                    if (!string.IsNullOrEmpty(existingTeacher.ImageUrl))
+                    {
+                        var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", existingTeacher.ImageUrl.TrimStart('/'));
+                        if (System.IO.File.Exists(oldImagePath))
+                            System.IO.File.Delete(oldImagePath);
+                    }
+
+                    var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "teachers");
+                    if (!Directory.Exists(imagePath))
+                        Directory.CreateDirectory(imagePath);
+
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
+                    var filePath = Path.Combine(imagePath, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await image.CopyToAsync(stream);
+                    }
+
+                    existingTeacher.ImageUrl = "/images/teachers/" + fileName;
+                }
+
                 try
                 {
-                    _context.Update(teacher);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!TeacherExists(teacher.Id))
-                    {
                         return NotFound();
-                    }
                     else
-                    {
                         throw;
-                    }
                 }
+
                 return RedirectToAction(nameof(Index));
             }
+
             return View(teacher);
         }
 
         // GET: Teachers/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -188,15 +272,27 @@ namespace WorkshopV2.Controllers
         // POST: Teachers/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var teacher = await _context.Teacher.FindAsync(id);
             if (teacher != null)
             {
-                _context.Teacher.Remove(teacher);
-            }
+                var user = await _userManager.Users.FirstOrDefaultAsync(u => u.TeacherId == teacher.Id);
+                if (user != null)
+                {
+                    var result = await _userManager.DeleteAsync(user);
+                    if (!result.Succeeded)
+                    {
+                        ModelState.AddModelError("", "Unable to delete associated user account.");
+                        return View(teacher);
+                    }
+                }
 
-            await _context.SaveChangesAsync();
+                _context.Teacher.Remove(teacher);
+
+                await _context.SaveChangesAsync();
+            }
             return RedirectToAction(nameof(Index));
         }
 

@@ -361,3 +361,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Ignore image and PDF uploads
+wwwroot/uploads/
+wwwroot/images/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.pdf

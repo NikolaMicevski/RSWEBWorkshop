@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using WorkshopV2.Models;
 
 namespace WorkshopV2.Data
 {
-    public class WorkshopV2Context : DbContext
+    public class WorkshopV2Context : IdentityDbContext<WorkshopV2User>
     {
         public WorkshopV2Context (DbContextOptions<WorkshopV2Context> options)
             : base(options)

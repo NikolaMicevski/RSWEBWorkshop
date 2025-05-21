@@ -17,6 +17,7 @@ namespace WorkshopV2.Models
         public int? CurrentSemestar { get; set; }
         [StringLength(25)]
         public string? EducationLevel { get; set; }
+        public string? ImageUrl { get; set; }
         public List<Enrollment>? Enrollment { get; set; }
     }
 }
